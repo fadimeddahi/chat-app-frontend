@@ -1,9 +1,42 @@
-import React from 'react'
+import React, { useEffect } from "react";
+import "./index.css";
+import Navbar from "./components/Navbar";
+import Home from "./pages/Home";
+import Signup from "./pages/Signup";
+import Login from "./pages/Login";
+import Settings from "./pages/Settings";
+import Profile from "./pages/Profile";
+import { Routes, Route } from "react-router-dom";
+import { Loader } from "lucide-react";
+import { useAuthStore } from "./store/useAuthStore";
 
 const App = () => {
-  return (
-    <div>App</div>
-  )
-}
+   const { user, checkAuth, isCheckingAuth } = useAuthStore();
 
-export default App
+   useEffect(() => {
+       checkAuth();
+   }, []);
+
+   if (isCheckingAuth) {
+       return (
+           <div className="flex justify-center items-center h-screen">
+               <Loader size={64} className="animate-spin" />
+           </div>
+       );
+   }
+
+   return (
+       <div>
+           <Navbar />
+           <Routes>
+               <Route path="/" element={user ? <Home /> : <Login />} />
+               <Route path="/signup" element={!user ? <Signup /> : <Home />} />
+               <Route path="/login" element={!user ? <Login /> : <Home />} />
+               <Route path="/settings" element={user ? <Settings /> : <Login />} />
+               <Route path="/profile" element={<Profile />} />
+           </Routes>
+       </div>
+   );
+};
+
+export default App;
