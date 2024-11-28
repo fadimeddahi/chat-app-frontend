@@ -9,13 +9,16 @@ import Profile from "./pages/Profile";
 import { Routes, Route } from "react-router-dom";
 import { Loader } from "lucide-react";
 import { useAuthStore } from "./store/useAuthStore";
+import { Toaster } from "react-hot-toast";
 
 const App = () => {
    const { user, checkAuth, isCheckingAuth } = useAuthStore();
 
    useEffect(() => {
        checkAuth();
-   }, []);
+       console.log(user);
+
+   }, [isCheckingAuth]);
 
    if (isCheckingAuth) {
        return (
@@ -24,6 +27,7 @@ const App = () => {
            </div>
        );
    }
+
 
    return (
        <div>
@@ -35,6 +39,10 @@ const App = () => {
                <Route path="/settings" element={user ? <Settings /> : <Login />} />
                <Route path="/profile" element={<Profile />} />
            </Routes>
+
+           <Toaster />
+
+
        </div>
    );
 };
