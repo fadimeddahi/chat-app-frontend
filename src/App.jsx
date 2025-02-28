@@ -15,10 +15,11 @@ const App = () => {
    const { user, checkAuth, isCheckingAuth } = useAuthStore();
 
    useEffect(() => {
+       console.log(user);
        checkAuth();
        console.log(user);
 
-   }, [isCheckingAuth]);
+   }, []);
 
    if (isCheckingAuth) {
        return (
