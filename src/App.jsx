@@ -10,9 +10,13 @@ import { Routes, Route } from "react-router-dom";
 import { Loader } from "lucide-react";
 import { useAuthStore } from "./store/useAuthStore";
 import { Toaster } from "react-hot-toast";
+import { useThemeStore } from "./store/useThemeStore";
 
 const App = () => {
-   const { user, checkAuth, isCheckingAuth } = useAuthStore();
+   const { user, checkAuth, isCheckingAuth , onlineUsers} = useAuthStore();
+   const { theme } = useThemeStore();
+
+   console.log(onlineUsers);
 
    useEffect(() => {
        console.log(user);
@@ -31,7 +35,7 @@ const App = () => {
 
 
    return (
-       <div>
+       <div data-theme={theme} className="flex flex-col h-screen">
            <Navbar />
            <Routes>
                <Route path="/" element={user ? <Home /> : <Login />} />

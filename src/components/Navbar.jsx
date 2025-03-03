@@ -6,7 +6,6 @@ import { Link } from "react-router-dom";
 
 const Navbar = () => {
   const { user, logout } = useAuthStore();
-  console.log(user)
 
   return (
     <header
