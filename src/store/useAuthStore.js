@@ -47,10 +47,13 @@ export const useAuthStore = create((set, get) => ({
     try {
       const response = await axiosInstance.post("auth/login", data);
       toast.success("Logged in successfully");
+      // Your backend returns the user directly in response.data without nesting
       set({ user: response.data });
       get().connectSocket();
     } catch (error) {
-      toast.error(error.response.data.message);
+      // Use error.response.data.error to match your backend
+      toast.error(error.response?.data?.error || "Login failed");
+      console.error("Login error:", error.response?.data);
     } finally {
       set({ isLoggingIn: false });
     }

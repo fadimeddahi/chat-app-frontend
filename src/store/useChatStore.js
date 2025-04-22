@@ -37,21 +37,28 @@ export const useChatStore = create((set, get) => ({
   sendMessage: async (messageData) => {
     try {
       const { selectedUser } = get();
+      // Create temp message with temp ID to display immediately
+      const tempMessage = {
+        ...messageData,
+        tempId: Date.now().toString(), // Create a temporary ID
+        sender: useAuthStore.getState().user._id,
+        receiver: selectedUser._id,
+        createdAt: new Date().toISOString()
+      };
+      
+      // Update local state immediately for sender
+      set(state => ({
+        messages: [...state.messages, tempMessage]
+      }));
+      
+      // Then send to server
       const res = await axiosInstance.post(
         `/messages/send/${selectedUser._id}`,
         messageData
       );
       
-      set(state => ({
-        messages: [...state.messages, {
-          ...res.data,
-          senderId: {
-            _id: res.data.senderId,
-            profilePicture: res.data.senderProfilePicture
-          },
-          image: res.data.image
-        }]
-      }));
+      // You could update the temporary message with the real one if needed
+      return res.data;
     } catch (error) {
       console.error("Message send error:", error);
       throw error;
@@ -59,22 +66,33 @@ export const useChatStore = create((set, get) => ({
   },
 
   subscribeToMessages: () => {
+    const { selectedUser } = get();
+    if (!selectedUser) return;
+  
     const socket = useAuthStore.getState().socket;
-    if (!socket) return () => {};
-
-    const messageHandler = (newMessage) => {
-      set(state => {
-        if (state.messages.some(msg => msg._id === newMessage._id)) return state;
-        return { messages: [...state.messages, newMessage] };
-      });
+  
+    const handleNewMessage = (newMessage) => {
+      const isMessageFromSelectedUser = newMessage.senderId === selectedUser._id;
+  
+      // Prevent duplicates
+      const messageExists = get().messages.some(msg => msg._id === newMessage._id);
+  
+      if (isMessageFromSelectedUser && !messageExists) {
+        set((state) => ({
+          messages: [...state.messages, newMessage],
+        }));
+      }
     };
-
-    socket.on("newMessage", messageHandler);
-    
+  
+    socket.on("newMessage", handleNewMessage);
+  
+    // Return a cleanup function to remove the listener
     return () => {
-      socket.off("newMessage", messageHandler);
+      socket.off("newMessage", handleNewMessage);
     };
   },
+  
 
-  setSelectedUser: (selectedUser) => set({ selectedUser }),
+  setSelectedUser: (selectedUser) => set*({ selectedUser }),
 }));
+

@@ -27,7 +27,6 @@ const MessageInput = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    let tempId; // Declare tempId here
     
     try {
       if (!message.trim() && !imagePreview) {
@@ -40,7 +39,8 @@ const MessageInput = () => {
         return;
       }
 
-      tempId = Date.now().toString();
+      // Create temporary message for optimistic UI update
+      const tempId = Date.now().toString();
       const tempMessage = {
         _id: tempId,
         senderId: {
@@ -50,29 +50,44 @@ const MessageInput = () => {
         receiverId: selectedUser._id,
         message: message.trim(),
         image: imagePreview,
-        createdAt: new Date()
+        createdAt: new Date(),
+        isOptimistic: true // Add flag to identify optimistic updates
       };
 
-      // Optimistic update
-      useChatStore.getState().sendMessage(tempMessage);
+      // Optimistic update - Add to state directly
+      useChatStore.setState(state => ({
+        messages: [...state.messages, tempMessage]
+      }));
 
       // Real submission
-      await sendMessage({
+      const response = await sendMessage({
         message: message.trim(),
-        image: imagePreview
+        image: imagePreview,
+        tempId: tempId // Pass tempId to identify this message
       });
+
+      // Update temp message with real data
+      useChatStore.setState(state => ({
+        messages: state.messages.map(msg => 
+          msg._id === tempId 
+            ? { ...response, senderId: {
+                _id: response.senderId,
+                profilePicture: response.senderProfilePicture
+              }}
+            : msg
+        )
+      }));
 
       setMessage("");
       setImagePreview(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
 
     } catch (error) {
-      // Rollback using tempId
-      if (tempId) {
-        useChatStore.setState(state => ({
-          messages: state.messages.filter(msg => msg._id !== tempId)
-        }));
-      }
+      // Rollback the optimistic update
+      useChatStore.setState(state => ({
+        messages: state.messages.filter(msg => !msg.isOptimistic)
+      }));
+      
       toast.error(error.message || "Failed to send message");
     }
   };
